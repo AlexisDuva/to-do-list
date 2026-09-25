@@ -80,7 +80,11 @@ Reference docs: [functional-requirements.md](./functional-requirements.md), [cla
    7. Commit: `"Step 8: error handling and validation"`.
 
 9. **Testing**
-   Unit tests for services, integration tests for controllers (e.g. using an in-memory or test PostgreSQL/Testcontainers setup).
+   1. Add Testcontainers to `build.gradle`: `spring-boot-testcontainers`, `org.testcontainers:junit-jupiter`, `org.testcontainers:postgresql` — used instead of an in-memory DB (H2) because the Flyway migration uses Postgres-specific SQL (`BIGSERIAL`); Testcontainers spins up a real, throwaway Postgres container per test run so tests exercise the same DB the app actually uses.
+   2. Unit tests for the service layer (`com.alex.todolist.service`), mocking repositories with Mockito — fast, no DB: `ProjectServiceTest` (not-found handling, task unassignment on delete), `TagServiceTest` (CRUD + not-found), `TaskServiceTest` (default priority, complete/incomplete, not-found handling).
+   3. Integration tests for the controllers (`com.alex.todolist.controller`), using `@SpringBootTest(webEnvironment = RANDOM_PORT)` + `TestRestTemplate` against the real Testcontainers Postgres — full stack, mirroring the manual curl checks from steps 7–8: a shared `AbstractIntegrationTest` base class starting the container via `@DynamicPropertySource`, then `ProjectControllerIT`, `TagControllerIT`, `TaskControllerIT` — one happy-path test per resource plus the `404`/`400` cases already covered manually in the Postman "Error cases" folder, now automated. Each test cleans up its own rows in `@AfterEach` (real HTTP calls don't get the usual test-transaction-rollback trick).
+   4. Verify: run `./gradlew test`, confirm everything passes (Docker must be running for Testcontainers).
+   5. Commit: `"Step 9: unit and integration tests"`.
 
 10. **Manual verification**
     Run the app locally, exercise the API end-to-end (e.g. via curl/Postman) against the requirements doc to confirm behavior matches spec.
