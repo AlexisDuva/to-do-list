@@ -4,7 +4,7 @@ A single-user to-do list backend, built as a learning project for Java Spring Bo
 
 ## Status
 
-📝 Documentation in progress — implementation not started yet.
+🚧 In progress — steps 1–6 of the [implementation plan](docs/implementation-plan.md) done (scaffolding, DB + Flyway migration, entities, repositories, DTOs, service layer). Next: controllers.
 
 ## Tech stack
 
@@ -23,6 +23,7 @@ Full rationale for each choice: [docs/tech-stack.md](docs/tech-stack.md).
 - [REST API documentation](docs/api-documentation.md)
 - [Tech stack](docs/tech-stack.md)
 - [Implementation plan](docs/implementation-plan.md)
+- [Difficulties encountered](docs/difficulties.md)
 
 ## Project metadata
 
