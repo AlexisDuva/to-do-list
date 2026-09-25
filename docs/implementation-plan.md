@@ -36,7 +36,13 @@ Reference docs: [functional-requirements.md](./functional-requirements.md), [cla
    7. Commit: `"Step 4: Spring Data JPA repositories"`.
 
 5. **DTOs**
-   Request/response DTO classes for `Task`, `Project`, `Tag` matching the shapes in api-documentation.md, and mapping between entities and DTOs.
+   1. Create the `com.alex.todolist.dto` package.
+   2. Use Java `record`s (not classes/Lombok) — immutable, boilerplate-free, fits Java 21.
+   3. Response DTOs matching api-documentation.md's response shapes: `TaskResponse` (flattens `project`/`tags` into `projectId`/`tagIds`), `ProjectResponse`, `TagResponse` — each with a static `fromEntity(...)` factory method mapping the entity to the DTO.
+   4. Request DTOs matching the `POST`/`PUT` bodies: `TaskRequest`, `ProjectRequest`, `TagRequest` — plain data holders, no mapping method. Building an entity from a request needs repository lookups (resolve `projectId`/`tagIds` into real managed entities), which is business logic deferred to the service layer (step 6).
+   5. Validation annotations (e.g. `@NotBlank` on `title`/`name`) are **not** added yet — that needs the `spring-boot-starter-validation` dependency and ties into the error response shape, which belongs to step 8 (error handling).
+   6. Verify: `./gradlew compileJava` — confirms the DTOs and mapping code compile cleanly. No runtime behavior yet since nothing is wired to controllers/services until steps 6–7.
+   7. Commit: `"Step 5: DTOs and entity-to-DTO mapping"`.
 
 6. **Service layer**
    Business logic: `TaskService`, `ProjectService`, `TagService` — create/read/update/delete, complete/incomplete, filtering/sorting/search logic.
