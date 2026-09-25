@@ -45,7 +45,21 @@ Reference docs: [functional-requirements.md](./functional-requirements.md), [cla
    7. Commit: `"Step 5: DTOs and entity-to-DTO mapping"`.
 
 6. **Service layer**
-   Business logic: `TaskService`, `ProjectService`, `TagService` — create/read/update/delete, complete/incomplete, filtering/sorting/search logic.
+   1. Create the `com.alex.todolist.service` package.
+   2. Add `com.alex.todolist.exception.ResourceNotFoundException` (unchecked) — a forward-reference to step 8: services throw it when an id doesn't exist, but nothing catches it into a proper `404` JSON response until step 8 adds the `@ControllerAdvice`.
+   3. `ProjectService` — `getAll`, `getById` (throws `ResourceNotFoundException`), `create`, `update`, `delete`. `delete` must first unassign the project's tasks (fetch via a new `TaskRepository.findByProjectId(Long)`, set `project = null`, save each), then delete the project — required both by the API contract and by the `project_id` foreign key (no `ON DELETE` clause, so deleting a referenced project would otherwise violate the constraint).
+   4. `TagService` — `getAll`, `getById`, `create`, `update`, `delete`. No extra unassignment logic needed: `task_tag` was created with `ON DELETE CASCADE` on both FKs (step 2's migration), so the database removes the join rows automatically when a tag is deleted.
+   5. `TaskService` — the most involved:
+      - `getAll(status, projectId, tagId, priority, search, sortBy, sortDir)`: builds a `Specification<Task>` dynamically, ANDing in only the filters actually provided (`tagId` needs `root.join("tags")` + `query.distinct(true)` to avoid duplicate rows from the many-to-many join); builds a `Sort` from `sortBy`/`sortDir`; calls `taskRepository.findAll(spec, sort)`; maps results to `TaskResponse`.
+      - `getById(id)`.
+      - `create(TaskRequest)`: resolves `projectId`/`tagIds` into real managed `Project`/`Tag` entities via their repositories (the mapping step 5 deferred), defaults `priority` to `MEDIUM` if absent, sets `completed = false`, `createdAt = now()`.
+      - `update(id, TaskRequest)`: fetches the existing task (404 if missing), re-resolves project/tags, updates fields, saves.
+      - `complete(id)` / `incomplete(id)`: fetch, flip `completed`, save.
+      - `delete(id)`.
+   6. Add `List<Task> findByProjectId(Long projectId)` to `TaskRepository` (needed by `ProjectService.delete`).
+   7. Sanity check: temporary `CommandLineRunner` exercising `TaskService` specifically (create a task, `getAll()` with a filter, mark complete, delete) — the one service with real logic worth a live check; `ProjectService`/`TagService` are simple CRUD passthroughs covered properly in step 9. Remove the runner before committing.
+   8. Verify: run `./gradlew bootRun`, confirm the sanity check output is correct, remove the runner, confirm the app still boots cleanly.
+   9. Commit: `"Step 6: service layer (business logic)"`.
 
 7. **Controllers**
    REST controllers implementing every endpoint from api-documentation.md, wired to the services.
