@@ -187,6 +187,97 @@
           }
         }
       ]
+    },
+    {
+      "name": "Error cases",
+      "item": [
+        {
+          "name": "404 - Get task by unknown id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tasks/999999"
+          }
+        },
+        {
+          "name": "404 - Get project by unknown id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/projects/999999"
+          }
+        },
+        {
+          "name": "404 - Update tag with unknown id",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"whatever\"\n}"
+            },
+            "url": "{{baseUrl}}/api/tags/999999"
+          }
+        },
+        {
+          "name": "400 - Create project with blank name",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/api/projects"
+          }
+        },
+        {
+          "name": "400 - Create tag with missing name",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{baseUrl}}/api/tags"
+          }
+        },
+        {
+          "name": "400 - Create task with missing title",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"no title given\"\n}"
+            },
+            "url": "{{baseUrl}}/api/tasks"
+          }
+        },
+        {
+          "name": "400 - Create task with blank title",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"   \"\n}"
+            },
+            "url": "{{baseUrl}}/api/tasks"
+          }
+        },
+        {
+          "name": "404 - Create task with unknown projectId",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Task with bad project\",\n  \"projectId\": 999999\n}"
+            },
+            "url": "{{baseUrl}}/api/tasks"
+          }
+        }
+      ]
     }
   ]
 }
