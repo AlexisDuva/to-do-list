@@ -27,7 +27,13 @@ Reference docs: [functional-requirements.md](./functional-requirements.md), [cla
    8. Commit: `"Step 3: JPA entities (Task, Project, Tag, Priority)"`.
 
 4. **Repositories**
-   Spring Data JPA repository interfaces for `Task`, `Project`, `Tag` (basic CRUD, plus query methods needed for filtering: by status, project, tag, priority, text search).
+   1. Create the `com.alex.todolist.repository` package.
+   2. `ProjectRepository extends JpaRepository<Project, Long>` — basic CRUD only, no extra methods needed.
+   3. `TagRepository extends JpaRepository<Tag, Long>` — basic CRUD only.
+   4. `TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task>` — `JpaSpecificationExecutor` adds a `findAll(Specification<Task> spec)` method, which lets the service layer (step 6) dynamically combine the optional filters from `GET /api/tasks` (status, project, tag, priority, text search) into one query, instead of writing a derived-query-method for every possible filter combination.
+   5. Sanity check: add a temporary `CommandLineRunner` bean that saves a test `Task` via `TaskRepository` and fetches it back, printing the result to the console — proves the repository actually works end-to-end against the real database. Remove this bean before committing.
+   6. Verify: run `./gradlew bootRun`, confirm the sanity check prints the expected saved/fetched task with no errors, then remove the `CommandLineRunner` and confirm the app still boots cleanly.
+   7. Commit: `"Step 4: Spring Data JPA repositories"`.
 
 5. **DTOs**
    Request/response DTO classes for `Task`, `Project`, `Tag` matching the shapes in api-documentation.md, and mapping between entities and DTOs.
