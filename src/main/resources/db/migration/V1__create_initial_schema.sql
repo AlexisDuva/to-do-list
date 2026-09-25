@@ -1,0 +1,26 @@
+CREATE TABLE project (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE task (
+    id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    due_date DATE,
+    priority VARCHAR(10) NOT NULL DEFAULT 'MEDIUM',
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    project_id BIGINT REFERENCES project(id)
+);
+
+CREATE TABLE tag (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE task_tag (
+    task_id BIGINT NOT NULL REFERENCES task(id) ON DELETE CASCADE,
+    tag_id BIGINT NOT NULL REFERENCES tag(id) ON DELETE CASCADE,
+    PRIMARY KEY (task_id, tag_id)
+);

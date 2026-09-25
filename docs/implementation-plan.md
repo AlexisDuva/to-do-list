@@ -10,7 +10,11 @@ Reference docs: [functional-requirements.md](./functional-requirements.md), [cla
    Developer generates the project at [start.spring.io](https://start.spring.io) — Gradle + Java Spring Boot, with dependencies: Spring Web, Spring Data JPA, PostgreSQL Driver, Flyway Migration — and adds the generated files to the repo. Agent then reviews the generated structure, confirms it matches the tech-stack decisions, and notes anything to adjust before moving to step 2.
 
 2. **Database connection + first migration**
-   Configure `application.properties` for local PostgreSQL, add the first Flyway migration (`V1__create_initial_schema.sql`) creating `project`, `task`, `tag`, `task_tag` tables. Verify the app starts and Flyway applies the migration.
+   1. Run PostgreSQL via Docker locally (`docker run` with a `todolist` DB/user/password).
+   2. Add datasource config to `application.properties` (URL, username, password) plus `spring.jpa.hibernate.ddl-auto=validate` — set to `validate` (not `update`/`create`) because Flyway owns the schema, not Hibernate, avoiding the two fighting each other.
+   3. Add the first Flyway migration — `V1__create_initial_schema.sql` creating `project`, `task`, `tag`, and the `task_tag` join table, matching the class diagram.
+   4. Verify by running `./gradlew bootRun` and confirming in the logs that Flyway applied `V1` successfully.
+   5. Commit: `"Step 2: database connection and first Flyway migration"`.
 
 3. **Entities**
    JPA entity classes: `Task`, `Project`, `Tag`, `Priority` enum, mapped to the schema from step 2, matching class-diagram.md.
