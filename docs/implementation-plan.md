@@ -17,7 +17,14 @@ Reference docs: [functional-requirements.md](./functional-requirements.md), [cla
    5. Commit: `"Step 2: database connection and first Flyway migration"`.
 
 3. **Entities**
-   JPA entity classes: `Task`, `Project`, `Tag`, `Priority` enum, mapped to the schema from step 2, matching class-diagram.md.
+   1. Create the `com.alex.todolist.entity` package.
+   2. `Priority` enum (`LOW`, `MEDIUM`, `HIGH`).
+   3. `Project` entity — `id`, `name`, inverse `tasks` (`@OneToMany(mappedBy = "project")`).
+   4. `Tag` entity — `id`, unique `name`.
+   5. `Task` entity — `id`, `title`, `description`, `dueDate`, `priority` (`@Enumerated(EnumType.STRING)` so the DB stores readable values, not ordinals), `completed`, `createdAt`, `project` (`@ManyToOne @JoinColumn(name = "project_id")`), `tags` (`@ManyToMany` via the existing `task_tag` join table).
+   6. No Lombok — plain getters/setters/constructors, since `build.gradle` doesn't include it (keeps things explicit for a learning project).
+   7. Verify: run `./gradlew bootRun` in the background and inspect the log. `ddl-auto=validate` (set in step 2) makes Hibernate compare the entities against the schema Flyway already created — a clean startup confirms the mapping is correct, while a `SchemaManagementException` names the mismatch to fix. No endpoints exist yet, so this structural check is the whole verification; stop the process afterward.
+   8. Commit: `"Step 3: JPA entities (Task, Project, Tag, Priority)"`.
 
 4. **Repositories**
    Spring Data JPA repository interfaces for `Task`, `Project`, `Tag` (basic CRUD, plus query methods needed for filtering: by status, project, tag, priority, text search).
