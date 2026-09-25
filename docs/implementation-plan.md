@@ -62,7 +62,13 @@ Reference docs: [functional-requirements.md](./functional-requirements.md), [cla
    9. Commit: `"Step 6: service layer (business logic)"`.
 
 7. **Controllers**
-   REST controllers implementing every endpoint from api-documentation.md, wired to the services.
+   1. Create the `com.alex.todolist.controller` package.
+   2. `ProjectController` (`@RequestMapping("/api/projects")`) — `GET ""`, `GET "/{id}"`, `POST ""` (201), `PUT "/{id}"`, `DELETE "/{id}"` (204), calling `ProjectService`.
+   3. `TagController` — same shape at `/api/tags`, calling `TagService`.
+   4. `TaskController` — `/api/tasks`: `GET ""` with all six filters as `@RequestParam(required = false)` (`status`, `projectId`, `tagId`, `priority`, `search`, `sortBy`, `sortDir`, passed straight into `TaskService.getAll`), `GET "/{id}"`, `POST ""` (201), `PUT "/{id}"`, `PATCH "/{id}/complete"`, `PATCH "/{id}/incomplete"`, `DELETE "/{id}"` (204).
+   5. Not-found behavior is still incomplete at this point, expected rather than a bug: hitting a missing id currently returns a generic `500`, not the `404` from api-documentation.md, since nothing catches `ResourceNotFoundException` yet — that's step 8.
+   6. Verify via **curl against a real running app** (first step where this is possible) instead of a `CommandLineRunner`: `./gradlew bootRun` on the default port, then POST a project, GET the list, POST a task referencing it, GET with a filter, PATCH complete, DELETE — confirming status codes and JSON shapes match api-documentation.md. Clean up any test rows created, then stop the app.
+   7. Commit: `"Step 7: REST controllers"`.
 
 8. **Error handling**
    Global exception handler (`@ControllerAdvice`) producing the error response shape from api-documentation.md (404s, validation errors, etc.).
