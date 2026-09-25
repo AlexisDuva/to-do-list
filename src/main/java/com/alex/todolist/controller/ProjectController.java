@@ -3,6 +3,7 @@ package com.alex.todolist.controller;
 import com.alex.todolist.dto.ProjectRequest;
 import com.alex.todolist.dto.ProjectResponse;
 import com.alex.todolist.service.ProjectService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,12 +37,12 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjectResponse> create(@RequestBody ProjectRequest request) {
+    public ResponseEntity<ProjectResponse> create(@Valid @RequestBody ProjectRequest request) {
         return ResponseEntity.status(201).body(projectService.create(request));
     }
 
     @PutMapping("/{id}")
-    public ProjectResponse update(@PathVariable Long id, @RequestBody ProjectRequest request) {
+    public ProjectResponse update(@PathVariable Long id, @Valid @RequestBody ProjectRequest request) {
         return projectService.update(id, request);
     }
 

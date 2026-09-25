@@ -1,4 +1,6 @@
 package com.alex.todolist.dto;
 
-public record TagRequest(String name) {
+import jakarta.validation.constraints.NotBlank;
+
+public record TagRequest(@NotBlank String name) {
 }

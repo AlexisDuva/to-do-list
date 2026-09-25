@@ -3,6 +3,7 @@ package com.alex.todolist.controller;
 import com.alex.todolist.dto.TagRequest;
 import com.alex.todolist.dto.TagResponse;
 import com.alex.todolist.service.TagService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,12 +32,12 @@ public class TagController {
     }
 
     @PostMapping
-    public ResponseEntity<TagResponse> create(@RequestBody TagRequest request) {
+    public ResponseEntity<TagResponse> create(@Valid @RequestBody TagRequest request) {
         return ResponseEntity.status(201).body(tagService.create(request));
     }
 
     @PutMapping("/{id}")
-    public TagResponse update(@PathVariable Long id, @RequestBody TagRequest request) {
+    public TagResponse update(@PathVariable Long id, @Valid @RequestBody TagRequest request) {
         return tagService.update(id, request);
     }
 

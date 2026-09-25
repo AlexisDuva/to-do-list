@@ -71,7 +71,13 @@ Reference docs: [functional-requirements.md](./functional-requirements.md), [cla
    7. Commit: `"Step 7: REST controllers"`.
 
 8. **Error handling**
-   Global exception handler (`@ControllerAdvice`) producing the error response shape from api-documentation.md (404s, validation errors, etc.).
+   1. Add the `spring-boot-starter-validation` dependency to `build.gradle`.
+   2. Add validation annotations to the request DTOs (deferred from step 5): `@NotBlank` on `ProjectRequest.name`, `TagRequest.name`, `TaskRequest.title`.
+   3. Add `@Valid` before `@RequestBody` on every `create`/`update` controller method, so Spring actually enforces the annotations and throws `MethodArgumentNotValidException` on failure.
+   4. `ErrorResponse` record matching api-documentation.md's error shape exactly: `status`, `error`, `message`, `timestamp`.
+   5. `GlobalExceptionHandler` (`@RestControllerAdvice`) with two handlers: `ResourceNotFoundException` → `404` (this is what fixes step 7's known `500` gap), `MethodArgumentNotValidException` → `400` with a message built from the failed field(s).
+   6. Verify via curl, extending step 7's checks: `GET` a deleted/missing id (now `404`, not `500`), `POST` a project/task with a blank/missing required field (now `400`) — confirming the JSON body matches the documented error shape each time.
+   7. Commit: `"Step 8: error handling and validation"`.
 
 9. **Testing**
    Unit tests for services, integration tests for controllers (e.g. using an in-memory or test PostgreSQL/Testcontainers setup).

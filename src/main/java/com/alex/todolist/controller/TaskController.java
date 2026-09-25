@@ -4,6 +4,7 @@ import com.alex.todolist.dto.TaskRequest;
 import com.alex.todolist.dto.TaskResponse;
 import com.alex.todolist.entity.Priority;
 import com.alex.todolist.service.TaskService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,12 +48,12 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<TaskResponse> create(@RequestBody TaskRequest request) {
+    public ResponseEntity<TaskResponse> create(@Valid @RequestBody TaskRequest request) {
         return ResponseEntity.status(201).body(taskService.create(request));
     }
 
     @PutMapping("/{id}")
-    public TaskResponse update(@PathVariable Long id, @RequestBody TaskRequest request) {
+    public TaskResponse update(@PathVariable Long id, @Valid @RequestBody TaskRequest request) {
         return taskService.update(id, request);
     }
 
