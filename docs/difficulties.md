@@ -17,3 +17,28 @@ Functionally identical (no filter applied yet), but avoids the ambiguous overloa
 `@ManyToMany` fields default to `FetchType.LAZY` — Hibernate only loads `tags` from the DB when something calls `.getTags()`. Spring Data repository methods open and close their own transaction/session by the time they return. So `TaskResponse.fromEntity(task)` failed when reading `task.getTags()` for entities returned by `taskRepository.findAll(spec, sort)`, since the Hibernate session was already closed by the time the mapping code ran in `TaskService`.
 
 Fix: added `@Transactional` to the `TaskService` class, keeping the session open for the whole service method — including the entity-to-DTO mapping that reads the lazy `tags` collection.
+
+## Step 9 — Testing
+
+**1. Testcontainers artifacts had no resolvable version**
+Adding `testImplementation 'org.testcontainers:junit-jupiter'` / `'org.testcontainers:postgresql'` with no version failed ("Could not find org.testcontainers:junit-jupiter:."). Spring Boot's dependency management didn't pin a concrete version automatically the way it does for Spring's own starters.
+
+Fix: explicitly import the Testcontainers BOM, `platform('org.testcontainers:testcontainers-bom:2.0.5')`, which pins consistent versions for all `org.testcontainers:*` modules at once.
+
+**2. `TestRestTemplate` wasn't on the classpath**
+Spring Boot 4 removed the old monolithic `spring-boot-starter-test` in favor of granular test starters, and `TestRestTemplate` isn't where Boot 3-era guides say it is. The actual artifact is `spring-boot-resttestclient`, and the class itself moved package, from `org.springframework.boot.test.web.client.TestRestTemplate` to `org.springframework.boot.resttestclient.TestRestTemplate`. Found by grepping the actual jar contents in the Gradle cache rather than guessing further.
+
+**3. `TestRestTemplate` still wasn't auto-configured**
+Even with the right dependency, `@SpringBootTest(webEnvironment = RANDOM_PORT)` no longer auto-configures a `TestRestTemplate` bean by itself (it did in Boot 3). Boot 4 requires an explicit `@AutoConfigureTestRestTemplate` annotation on the test class. Adding it then surfaced `ClassNotFoundException: org.springframework.boot.restclient.RestTemplateBuilder`, fixed by also adding the `spring-boot-restclient` dependency.
+
+**4. Testcontainers 2.x renamed both artifact coordinates and packages**
+Testcontainers 2.0 prefixed all module artifact ids (`org.testcontainers:junit-jupiter` → `org.testcontainers:testcontainers-junit-jupiter`, same for `postgresql`) — old and new names/versions can't be mixed (e.g. requesting the new artifact name at an old 1.x version resolves to nothing). Separately, `org.testcontainers.containers.PostgreSQLContainer` is deprecated in favor of `org.testcontainers.postgresql.PostgreSQLContainer`, which also dropped its self-typing generic (`PostgreSQLContainer<SELF extends ...>` → plain `PostgreSQLContainer`).
+
+Fix: aligned on the 2.x naming throughout (`testcontainers-junit-jupiter`, `testcontainers-postgresql`, BOM version `2.0.5`), and switched the import/field type to the non-deprecated `org.testcontainers.postgresql.PostgreSQLContainer` (no generic parameter).
+
+**5. `@Container` broke Testcontainers sharing across test classes**
+After adding `spring-boot-testcontainers` and refactoring `AbstractIntegrationTest` to use `@Container @ServiceConnection` (replacing the manual `static { POSTGRES.start(); }` + `@DynamicPropertySource` wiring), 6 of 22 tests started failing with `ConnectException`/`CannotCreateTransactionException` and a full run went from ~12s to over 5 minutes.
+
+Cause: `@Container` tells the JUnit 5 Testcontainers extension to manage that field's lifecycle, **stopping the container after the last test in each test class**. `POSTGRES` is a `static` field inherited from `AbstractIntegrationTest` and shared (same instance) across `ProjectControllerIT`, `TagControllerIT`, `TaskControllerIT`. As soon as the first class's tests finished, `@Container` stopped the shared container — every subsequent class then hit a dead database (the 5-minute runtime was HikariCP retrying the now-refused connection before giving up).
+
+Fix: kept `@ServiceConnection` (it detects the annotated field independently of container lifecycle management, so it doesn't need `@Container` to work), but reverted to the manual `static { POSTGRES.start(); }` (no matching `stop()`, relying on Testcontainers' Ryuk reaper to clean it up at JVM shutdown) — preserving true cross-class sharing while still avoiding the manual `@DynamicPropertySource` boilerplate.
