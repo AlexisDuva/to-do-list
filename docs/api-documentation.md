@@ -1,0 +1,171 @@
+# REST API Documentation — To-Do List App
+
+Based on [functional-requirements.md](./functional-requirements.md) and [class-diagram.md](./class-diagram.md).
+
+All request/response bodies are JSON. Base path: `/api`.
+
+## Tasks
+
+### `GET /api/tasks`
+List tasks.
+
+**Query parameters** (all optional):
+| Param | Type | Description |
+|---|---|---|
+| `status` | `completed` \| `incomplete` | Filter by completion status |
+| `projectId` | number | Filter by project |
+| `tagId` | number | Filter by tag |
+| `priority` | `LOW` \| `MEDIUM` \| `HIGH` | Filter by priority |
+| `search` | string | Search by text in title/description |
+| `sortBy` | `dueDate` \| `priority` \| `createdAt` | Field to sort by |
+| `sortDir` | `asc` \| `desc` | Sort direction (default `asc`) |
+
+**Response** `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "title": "Buy groceries",
+    "description": "Milk, eggs, bread",
+    "dueDate": "2026-09-30",
+    "priority": "MEDIUM",
+    "completed": false,
+    "createdAt": "2026-09-25T10:00:00",
+    "projectId": 2,
+    "tagIds": [1, 3]
+  }
+]
+```
+
+### `GET /api/tasks/{id}`
+Get a single task.
+
+**Response** `200 OK` — same shape as above single object.
+**Response** `404 Not Found` — task does not exist.
+
+### `POST /api/tasks`
+Create a task.
+
+**Request body**
+```json
+{
+  "title": "Buy groceries",
+  "description": "Milk, eggs, bread",
+  "dueDate": "2026-09-30",
+  "priority": "MEDIUM",
+  "projectId": 2,
+  "tagIds": [1, 3]
+}
+```
+`title` is required. All other fields are optional.
+
+**Response** `201 Created` — created task object.
+
+### `PUT /api/tasks/{id}`
+Update a task's fields (title, description, due date, priority, project, tags).
+
+**Request body** — same shape as `POST`.
+
+**Response** `200 OK` — updated task object.
+**Response** `404 Not Found`.
+
+### `PATCH /api/tasks/{id}/complete`
+Mark a task as complete.
+
+**Response** `200 OK` — updated task object.
+
+### `PATCH /api/tasks/{id}/incomplete`
+Mark a task as incomplete.
+
+**Response** `200 OK` — updated task object.
+
+### `DELETE /api/tasks/{id}`
+Delete a task.
+
+**Response** `204 No Content`.
+**Response** `404 Not Found`.
+
+---
+
+## Projects
+
+### `GET /api/projects`
+List all projects.
+
+**Response** `200 OK`
+```json
+[
+  { "id": 2, "name": "Work" }
+]
+```
+
+### `GET /api/projects/{id}`
+Get a single project.
+
+### `POST /api/projects`
+Create a project.
+
+**Request body**
+```json
+{ "name": "Work" }
+```
+
+**Response** `201 Created`.
+
+### `PUT /api/projects/{id}`
+Rename a project.
+
+### `DELETE /api/projects/{id}`
+Delete a project. Tasks belonging to it are unassigned (`projectId` set to `null`), not deleted.
+
+**Response** `204 No Content`.
+
+---
+
+## Tags
+
+### `GET /api/tags`
+List all tags.
+
+**Response** `200 OK`
+```json
+[
+  { "id": 1, "name": "errand" }
+]
+```
+
+### `POST /api/tags`
+Create a tag.
+
+**Request body**
+```json
+{ "name": "errand" }
+```
+
+**Response** `201 Created`.
+
+### `PUT /api/tags/{id}`
+Rename a tag.
+
+### `DELETE /api/tags/{id}`
+Delete a tag. It is removed from any tasks it was attached to.
+
+**Response** `204 No Content`.
+
+---
+
+## Error responses
+
+All errors follow this shape:
+```json
+{
+  "status": 404,
+  "error": "Not Found",
+  "message": "Task with id 42 not found",
+  "timestamp": "2026-09-25T10:00:00"
+}
+```
+
+## Status
+
+Draft — to be reviewed before implementation begins.
