@@ -15,12 +15,17 @@ public record TaskResponse(
         LocalDate dueDate,
         Priority priority,
         boolean completed,
+        boolean overdue,
         LocalDateTime createdAt,
         Long projectId,
         List<Long> tagIds
 ) {
 
     public static TaskResponse fromEntity(Task task) {
+        boolean overdue = !task.isCompleted()
+                && task.getDueDate() != null
+                && task.getDueDate().isBefore(LocalDate.now());
+
         return new TaskResponse(
                 task.getId(),
                 task.getTitle(),
@@ -28,6 +33,7 @@ public record TaskResponse(
                 task.getDueDate(),
                 task.getPriority(),
                 task.isCompleted(),
+                overdue,
                 task.getCreatedAt(),
                 task.getProject() != null ? task.getProject().getId() : null,
                 task.getTags() != null

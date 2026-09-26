@@ -30,12 +30,14 @@ List tasks.
     "dueDate": "2026-09-30",
     "priority": "MEDIUM",
     "completed": false,
+    "overdue": false,
     "createdAt": "2026-09-25T10:00:00",
     "projectId": 2,
     "tagIds": [1, 3]
   }
 ]
 ```
+`overdue` is computed, read-only (`true` when `dueDate` is in the past and the task is not `completed`) — it's never sent in a request body, only returned in responses.
 
 ### `GET /api/tasks/{id}`
 Get a single task.
