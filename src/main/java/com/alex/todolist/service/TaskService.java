@@ -122,7 +122,7 @@ public class TaskService {
             List<Tag> tags = new ArrayList<>(tagRepository.findAllById(request.tagIds()));
             task.setTags(tags);
         } else {
-            task.setTags(List.of());
+            task.setTags(new ArrayList<>());
         }
     }
 
