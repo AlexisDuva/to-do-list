@@ -10,7 +10,6 @@ import com.alex.todolist.exception.ResourceNotFoundException;
 import com.alex.todolist.repository.ProjectRepository;
 import com.alex.todolist.repository.TagRepository;
 import com.alex.todolist.repository.TaskRepository;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,9 +62,23 @@ public class TaskService {
             ));
         }
 
-        Sort sort = buildSort(sortBy, sortDir);
+        boolean descending = "desc".equalsIgnoreCase(sortDir);
+        spec = spec.and((root, query, cb) -> {
+            var orderExpression = "priority".equals(sortBy)
+                    // priority is stored as a string (LOW/MEDIUM/HIGH), so ORDER BY priority
+                    // would sort alphabetically instead of by actual priority rank. Map each
+                    // value to a rank instead so HIGH > MEDIUM > LOW as a user would expect.
+                    ? cb.<Integer>selectCase()
+                            .when(cb.equal(root.get("priority"), Priority.LOW), 1)
+                            .when(cb.equal(root.get("priority"), Priority.MEDIUM), 2)
+                            .when(cb.equal(root.get("priority"), Priority.HIGH), 3)
+                            .otherwise(0)
+                    : root.get("dueDate".equals(sortBy) ? "dueDate" : "createdAt");
+            query.orderBy(descending ? cb.desc(orderExpression) : cb.asc(orderExpression));
+            return cb.conjunction();
+        });
 
-        return taskRepository.findAll(spec, sort).stream()
+        return taskRepository.findAll(spec).stream()
                 .map(TaskResponse::fromEntity)
                 .toList();
     }
@@ -124,16 +137,6 @@ public class TaskService {
         } else {
             task.setTags(new ArrayList<>());
         }
-    }
-
-    private Sort buildSort(String sortBy, String sortDir) {
-        String property = switch (sortBy != null ? sortBy : "createdAt") {
-            case "dueDate" -> "dueDate";
-            case "priority" -> "priority";
-            default -> "createdAt";
-        };
-        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        return Sort.by(direction, property);
     }
 
     private Task findTaskOrThrow(Long id) {
