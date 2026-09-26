@@ -1,0 +1,6 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "deploy": {
+    "startCommand": "java $JAVA_OPTS -Dserver.port=$PORT -jar $(ls build/libs/*.jar | grep -v plain)"
+  }
+}
