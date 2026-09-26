@@ -62,6 +62,8 @@ Create a task.
 `title` is required. All other fields are optional.
 
 **Response** `201 Created` — created task object.
+**Response** `400 Bad Request` — `title` missing or blank.
+**Response** `404 Not Found` — `projectId` given but no such project exists.
 
 ### `PUT /api/tasks/{id}`
 Update a task's fields (title, description, due date, priority, project, tags).
@@ -69,7 +71,8 @@ Update a task's fields (title, description, due date, priority, project, tags).
 **Request body** — same shape as `POST`.
 
 **Response** `200 OK` — updated task object.
-**Response** `404 Not Found`.
+**Response** `400 Bad Request` — `title` missing or blank.
+**Response** `404 Not Found` — task does not exist, or `projectId` given but no such project exists.
 
 ### `PATCH /api/tasks/{id}/complete`
 Mark a task as complete.
@@ -104,6 +107,9 @@ List all projects.
 ### `GET /api/projects/{id}`
 Get a single project.
 
+**Response** `200 OK`.
+**Response** `404 Not Found` — project does not exist.
+
 ### `POST /api/projects`
 Create a project.
 
@@ -113,14 +119,20 @@ Create a project.
 ```
 
 **Response** `201 Created`.
+**Response** `400 Bad Request` — `name` missing or blank.
 
 ### `PUT /api/projects/{id}`
 Rename a project.
+
+**Response** `200 OK` — updated project object.
+**Response** `400 Bad Request` — `name` missing or blank.
+**Response** `404 Not Found` — project does not exist.
 
 ### `DELETE /api/projects/{id}`
 Delete a project. Tasks belonging to it are unassigned (`projectId` set to `null`), not deleted.
 
 **Response** `204 No Content`.
+**Response** `404 Not Found` — project does not exist.
 
 ---
 
@@ -145,14 +157,20 @@ Create a tag.
 ```
 
 **Response** `201 Created`.
+**Response** `400 Bad Request` — `name` missing or blank.
 
 ### `PUT /api/tags/{id}`
 Rename a tag.
+
+**Response** `200 OK` — updated tag object.
+**Response** `400 Bad Request` — `name` missing or blank.
+**Response** `404 Not Found` — tag does not exist.
 
 ### `DELETE /api/tags/{id}`
 Delete a tag. It is removed from any tasks it was attached to.
 
 **Response** `204 No Content`.
+**Response** `404 Not Found` — tag does not exist.
 
 ---
 
@@ -170,4 +188,4 @@ All errors follow this shape:
 
 ## Status
 
-Draft — to be reviewed before implementation begins.
+Implemented and deployed. Matches the app running on Railway.
