@@ -87,7 +87,15 @@ Reference docs: [functional-requirements.md](./functional-requirements.md), [cla
    5. Commit: `"Step 9: unit and integration tests"`.
 
 10. **Manual verification**
-    Run the app locally, exercise the API end-to-end (e.g. via curl/Postman) against the requirements doc to confirm behavior matches spec.
+    A deliberate, checklist-driven pass against [functional-requirements.md](./functional-requirements.md) — not re-testing that the code works (covered by step 9's automated suite), but confirming the running app actually satisfies every requirement as written.
+    1. Start the app locally against the real dev Postgres (not Testcontainers — this step verifies the app as a developer would actually run it).
+    2. Go through `functional-requirements.md` bullet by bullet, running the matching request(s) via curl/Postman and checking actual behavior, not just status codes (e.g. for sorting, eyeball that the order is actually correct).
+    3. Specifically exercise cross-cutting behaviors easy to miss in isolated tests: deleting a project unassigns (not deletes) its tasks; deleting a tag removes it from `task_tag` without touching the task; combining multiple filters at once (not just one at a time).
+    4. Run through the Postman "Error cases" folder, confirming error responses are sensible, not just correctly coded.
+    5. Record the pass/fail result per requirement.
+    6. No code changes as part of this step — any real gap found becomes its own follow-up decision, not a silent mid-step fix.
+
+    **Findings** (see [difficulties.md](./difficulties.md) for detail): 3 issues found — (1) "see overdue tasks highlighted or grouped separately" was never implemented anywhere; (2) `PUT /api/tasks/{id}` threw `500` when `tagIds` was omitted; (3) sorting by priority was alphabetical, not semantically ranked. Fixed as follow-up commits after this step.
 
 Deployment to Railway is a later, separate phase once the app works locally end-to-end.
 

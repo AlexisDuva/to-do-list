@@ -42,3 +42,16 @@ After adding `spring-boot-testcontainers` and refactoring `AbstractIntegrationTe
 Cause: `@Container` tells the JUnit 5 Testcontainers extension to manage that field's lifecycle, **stopping the container after the last test in each test class**. `POSTGRES` is a `static` field inherited from `AbstractIntegrationTest` and shared (same instance) across `ProjectControllerIT`, `TagControllerIT`, `TaskControllerIT`. As soon as the first class's tests finished, `@Container` stopped the shared container — every subsequent class then hit a dead database (the 5-minute runtime was HikariCP retrying the now-refused connection before giving up).
 
 Fix: kept `@ServiceConnection` (it detects the annotated field independently of container lifecycle management, so it doesn't need `@Container` to work), but reverted to the manual `static { POSTGRES.start(); }` (no matching `stop()`, relying on Testcontainers' Ryuk reaper to clean it up at JVM shutdown) — preserving true cross-class sharing while still avoiding the manual `@DynamicPropertySource` boilerplate.
+
+## Step 10 — Manual verification
+
+A checklist-driven pass against `functional-requirements.md` (running app, real dev Postgres) surfaced 3 issues the automated test suite hadn't caught:
+
+**1. "See overdue tasks highlighted or grouped separately" was never implemented**
+Grepping the codebase and `api-documentation.md` for "overdue" turned up nothing. The requirement exists in `functional-requirements.md` (step 1) but was silently dropped by the time the API was designed (step 2) and never caught since — nothing in steps 2–9 would have surfaced it, since none of them re-checked the original requirements doc line by line.
+
+**2. `PUT /api/tasks/{id}` threw `500` when `tagIds` was omitted**
+See the "Fix ..." commit for root cause (`List.of()` immutability vs. Hibernate's merge-time `clear()`). Notable because step 9's integration tests exercised `PUT`-adjacent paths (create, complete, delete) but never an update omitting `tagIds` specifically — a gap in test coverage, not just application code.
+
+**3. Sorting by priority was alphabetical, not semantically ranked**
+`priority` is stored via `@Enumerated(EnumType.STRING)`, so `ORDER BY priority` sorts the text values (`HIGH < LOW < MEDIUM`) rather than logical priority rank. `sortDir=desc` returned `MEDIUM, MEDIUM, LOW, HIGH` — the opposite of what "highest priority first" should mean. Not caught earlier because no automated test asserted the actual *order* of a priority-sorted result, only that sorting didn't error.
